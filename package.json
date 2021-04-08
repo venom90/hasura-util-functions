@@ -1,0 +1,32 @@
+{
+  "name": "hasura-util-functions",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:venom90/hasura-util-functions.git"
+  },
+  "keywords": [
+    "hasura",
+    "s3",
+    "util",
+    "functions",
+    "file upload"
+  ],
+  "author": "Tirumal Rao",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "aws-sdk": "^2.881.0",
+    "body-parser": "^1.19.0",
+    "chalk": "^4.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "multer": "^1.4.2",
+    "node-fetch": "^2.6.1"
+  }
+}
