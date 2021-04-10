@@ -22,8 +22,11 @@ module.exports = app => {
    * @author Tirumal Rao
    */
   app.post('/upload', upload.single("file"), async (req, res) => {
-    const { name, type, base64str } = req.body.input;
+    const { name, base64str } = req.body.input;
     const userid = req.body.session_variables['x-hasura-user-id'];
+
+    if (!userid) return res.json({message: 'Please login to upload the file'});
+
     let fileBuffer = Buffer.from(base64str, 'base64');
 
     let fileName = `${userid}-${decodeURIComponent(name).toLowerCase()}`;
@@ -33,6 +36,7 @@ module.exports = app => {
 
     uploadParams.Key = fileName;
     uploadParams.Body = fileBuffer;
+    
 
     try {
       // Upload the file S3
