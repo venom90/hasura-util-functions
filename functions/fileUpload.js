@@ -59,6 +59,16 @@ module.exports = app => {
 
         const { errors, data: fetch_data } = await util.executeGraphQL(HASURA_MUTATION, variables, 'POST');
 
+        const file_id = fetch_data.insert_files_one && fetch_data.insert_files_one.id
+        
+        const payload = {
+          message: 'File uploaded successfully',
+          filename: fileName,
+          file_path: data.Location,
+          userid,
+          file_id
+        }
+        
         // if Hasura operation errors, then throw error
         if (errors) {
           return res.json({
@@ -73,7 +83,8 @@ module.exports = app => {
             message: 'File uploaded successfully',
             filename: fileName,
             file_path: data.Location,
-            userid
+            userid,
+            file_id
           });
         }
       });
