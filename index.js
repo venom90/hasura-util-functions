@@ -17,6 +17,12 @@ app.use(express.static('public'));
 
 app.use(cors());
 
+// Root
+app.get('/', (_req, res) => res.send('void'));
+
+// Health Check API
+app.get('/health', (_req, res) => res.send('ok'));
+
 
 // Include routes
 require('./functions')(app);
