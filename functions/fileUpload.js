@@ -25,7 +25,7 @@ module.exports = app => {
     const { name, base64str } = req.body.input;
     const userid = req.body.session_variables['x-hasura-user-id'];
 
-    if (!userid) return res.json({message: 'Please login to upload the file'});
+    // if (!userid) return res.json({message: 'Please login to upload the file'});
 
     let fileBuffer = Buffer.from(base64str, 'base64');
 
