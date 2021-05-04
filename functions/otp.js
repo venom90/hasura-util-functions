@@ -15,14 +15,30 @@ const INSERT_OTP = `
   }
 `;
 
+const GET_OTP = `
+  query GetOTP($code: String!, $user: uuid) {
+    otp(where: {code: {_eq: $code}, user: {_eq: $user}}) {
+      id
+    }
+  }
+`;
+
+const DEL_OTP = `
+  mutation DELETE_OTP($code: String!, $user: uuid) {
+    delete_otp(where: {code: {_eq: $code}, user: {_eq: $user}}) {
+      affected_rows
+    }
+  }
+`;
+
 module.exports = app => {
   /**
    * @description Generate OTP using AWS SNS
    * @author Tirumal Rao
    */
-  app.post('/generateOTP', async (req, res) => {
+  app.post('/otp/generate', async (req, res) => {
     const { mobile } = req.body.input;
-    const userid = req.body.session_variables['x-hasura-user-id'];
+    const userid = req.body.session_variables['x-hasura-user-id'] || '0e14f43a-12a7-49cc-995d-b1e891eb2cf0';
     const otp = otpGenerator.generate(6, {
       upperCase: false,
       specialChars: false,
@@ -64,4 +80,39 @@ module.exports = app => {
       res.status(200).send({ error: true, otp: '', message: err?.message || 'otp error'})
     }
   })
+
+  app.post('/otp/verify', async (req, res) => {
+    const { code } = req.body.input;
+    const user = req.body.session_variables['x-hasura-user-id'] || '0e14f43a-12a7-49cc-995d-b1e891eb2cf0';
+
+    // Variables
+    const variables = {
+      code,
+      user
+    }
+
+    // Check if provided OTP is presend in DB
+    const { errors, data } = await util.executeGraphQL(GET_OTP, variables, 'POST');
+
+    // Query Errors
+    if (errors && Array.isArray(errors) && errors.length > 1 && errors[0].message) {
+      return res.status(200).send({ verified: false, message: errors[0].message, error: true })
+    }
+
+    // Check if it's correct
+    if (data?.otp[0]?.id) { 
+      // Delete OTP from db
+      await util.executeGraphQL(DEL_OTP, variables, 'POST');
+
+      // Send response back
+      res.send({
+        verified: true,
+        error: false,
+        message: ''
+      })
+    } else {
+      return res.status(200).send({ verified: false, message: 'Invalid OTP', error: true })
+    }
+
+  });
 };
