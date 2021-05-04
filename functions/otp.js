@@ -41,7 +41,7 @@ module.exports = app => {
    */
   app.post('/otp/generate', async (req, res) => {
     const { mobile } = req.body.input;
-    const userid = req.body.session_variables['x-hasura-user-id'] || '0e14f43a-12a7-49cc-995d-b1e891eb2cf0';
+    const userid = req.body.session_variables['x-hasura-user-id'];
     const otp = otpGenerator.generate(6, {
       upperCase: false,
       specialChars: false,
@@ -86,7 +86,7 @@ module.exports = app => {
 
   app.post('/otp/verify', async (req, res) => {
     const { code } = req.body.input;
-    const user = req.body.session_variables['x-hasura-user-id'] || '0e14f43a-12a7-49cc-995d-b1e891eb2cf0';
+    const user = req.body.session_variables['x-hasura-user-id'];
 
     // Variables
     const variables = {
