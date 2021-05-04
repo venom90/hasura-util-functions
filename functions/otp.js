@@ -28,6 +28,9 @@ const DEL_OTP = `
     delete_otp(where: {code: {_eq: $code}, user: {_eq: $user}}) {
       affected_rows
     }
+    update_users(where: {id: {_eq: $user}}, _set: {mobile_no_status: VERIFIED}) {
+      affected_rows
+    }
   }
 `;
 
@@ -54,7 +57,7 @@ module.exports = app => {
       })
 
       if (sms?.$response?.error) {
-        return res.status(200).send({ otp: '', error: true, message: sms?.$response?.error || 'Service error' })
+        return res.status(200).send({ otp: false, error: true, message: sms?.$response?.error || 'Service error' })
       }
 
       const variables = {
@@ -72,12 +75,12 @@ module.exports = app => {
       }
 
       if (data?.insert_otp?.returning[0].id) {
-        return res.status(200).send({ error: false, otp, message: '' })
+        return res.status(200).send({ error: false, otp: true, message: '' })
       } else {
-        return res.status(200).send({ error: true, otp: '', message: 'Error while inserting otp' })
+        return res.status(200).send({ error: true, otp: false, message: 'Error while inserting otp' })
       }
     } catch (err) {
-      res.status(200).send({ error: true, otp: '', message: err?.message || 'otp error'})
+      res.status(200).send({ error: true, otp: false, message: err?.message || 'otp error'})
     }
   })
 
@@ -113,6 +116,5 @@ module.exports = app => {
     } else {
       return res.status(200).send({ verified: false, message: 'Invalid OTP', error: true })
     }
-
   });
 };
