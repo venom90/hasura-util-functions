@@ -17,12 +17,27 @@ const uploadParams = {
 };
 
 module.exports = app => {
+  app.post('/s3/getobject', async(req, res) => {
+    const { name } = req.body.input;
+    
+    s3Client.getObject({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: name
+    }, async ( err, data) => {
+      let base64String = data.Body.toString('base64');
+      
+      let src = "data:image/jpeg;base64," + base64String;
+      return res.json({
+        src
+      })
+    })
+  });
   /**
    * @description Upload to file to S3 and insert file meta information into Hasura
    * @author Tirumal Rao
    */
   app.post('/upload', upload.single("file"), async (req, res) => {
-    const { name, base64str } = req.body.input;
+    const { name, base64str, orgid, doc_type, status } = req.body.input;
     const userid = req.body.session_variables['x-hasura-user-id'];
 
     // if (!userid) return res.json({message: 'Please login to upload the file'});
@@ -46,32 +61,43 @@ module.exports = app => {
         }
 
         // insert into hasura db
-        const HASURA_MUTATION = `
-          mutation ($file_path: String!, $userid: String!) {
+        const INSERT_FILE = `
+          mutation ($file_path: String!, $userid: String!, $fileName: String) {
             insert_files_one(object: {
               file_path: $file_path
               userid: $userid
+              key: $fileName
             }) {
               id
             }
           }
         `;
+
+        const INSERT_DOCUMENT = `
+          mutation INSERT_DOCUMENT($orgid:uuid, $userid: uuid, $file_id: uuid, $type: document_type_enum, $status: document_status_enum ) {
+            insert_document(objects: {organization: $orgid, submitted_by: $userid, file: $file_id, type: $type, status: $status}) {
+              affected_rows
+            }
+          }
+        `;
+
         const variables = {
           file_path: data.Location,
-          userid
+          userid,
+          fileName
         };
 
-        const { errors, data: fetch_data } = await util.executeGraphQL(HASURA_MUTATION, variables, 'POST');
-
+        const { errors, data: fetch_data } = await util.executeGraphQL(INSERT_FILE, variables, 'POST');
+        
         const file_id = fetch_data.insert_files_one && fetch_data.insert_files_one.id
         
-        const payload = {
-          message: 'File uploaded successfully',
-          filename: fileName,
-          file_path: data.Location,
+        const { errors: d_error, data: d_data } = await util.executeGraphQL(INSERT_DOCUMENT, {
+          orgid,
           userid,
-          file_id
-        }
+          file_id,
+          type: doc_type,
+          status
+        }, 'POST');
         
         // if Hasura operation errors, then throw error
         if (errors) {
